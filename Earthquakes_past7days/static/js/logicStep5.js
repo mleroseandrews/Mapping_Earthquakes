@@ -15,18 +15,24 @@ attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap
     accessToken: API_KEY
 });
 
+let myStyle = {
+    color: "#ffffa1",
+    weight: 2
+  }
+
+
 // Create a base layer that holds both maps.
 let baseMaps = {
     "Streets": streets,
     "Satellite": satelliteStreets
   };
-// Create the map object with center, zoom level and default layer.
+
+  // Create the map object with center, zoom level and default layer.
 let map = L.map('mapid', {
     center: [39.5, -98.5],
     zoom: 3,
     layers: [streets]
 })
-
 // Create the earthquake layer for our map.
 let earthquakes = new L.layerGroup();
 
@@ -40,7 +46,6 @@ let overlays = {
 // Then we add a control to the map that will allow the user to change
 // which layers are visible.
 L.control.layers(baseMaps, overlays).addTo(map);
-
 
 // Retrieve the earthquake GeoJSON data.
 d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson").then(function(data) {
@@ -59,6 +64,17 @@ function styleInfo(feature) {
       weight: 0.5
     };
   }
+
+    // This function determines the radius of the earthquake marker based on its magnitude.
+// Earthquakes with a magnitude of 0 will be plotted with a radius of 1.
+function getRadius(magnitude) {
+    if (magnitude === 0) {
+      return 1;
+    }
+    return magnitude * 4;
+  }
+
+
 // This function determines the color of the circle based on the magnitude of the earthquake.
 function getColor(magnitude) {
     if (magnitude > 5) {
@@ -77,15 +93,6 @@ function getColor(magnitude) {
       return "#d4ee00";
     }
     return "#98ee00";
-  }
-
-  // This function determines the radius of the earthquake marker based on its magnitude.
-// Earthquakes with a magnitude of 0 will be plotted with a radius of 1.
-function getRadius(magnitude) {
-    if (magnitude === 0) {
-      return 1;
-    }
-    return magnitude * 4;
   }
 
 
@@ -107,3 +114,32 @@ L.geoJSON(data, {
 
         earthquakes.addTo(map)
     });
+
+    // Create a legend control object.
+let legend = L.control({
+    position: "bottomright"
+  });
+
+  // Then add all the details for the legend.
+legend.onAdd = function() {
+    let div = L.DomUtil.create("div", "info legend");
+    const magnitudes = [0, 1, 2, 3, 4, 5];
+const colors = [
+  "#98ee00",
+  "#d4ee00",
+  "#eecc00",
+  "#ee9c00",
+  "#ea822c",
+  "#ea2c2c"
+];
+// Looping through our intervals to generate a label with a colored square for each interval.
+for (var i = 0; i < magnitudes.length; i++) {
+    console.log(colors[i]);
+    div.innerHTML +=
+      "<i style='background: " + colors[i] + "'></i> " +
+      magnitudes[i] + (magnitudes[i + 1] ? "&ndash;" + magnitudes[i + 1] + "<br>" : "+");
+ }
+  return div;
+};
+
+legend.addTo(map);
